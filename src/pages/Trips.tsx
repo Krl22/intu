@@ -6,7 +6,15 @@ import { MapPin } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { firestore } from "@/lib/firebase";
 import { useAuth } from "@/context/useAuth";
-import { collection, onSnapshot, query, where, orderBy, Timestamp, getDocs } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  query,
+  where,
+  orderBy,
+  Timestamp,
+  getDocs,
+} from "firebase/firestore";
 
 type RideDoc = {
   destination?: { address?: string | null; lat: number; lng: number };
@@ -19,9 +27,13 @@ type RideDoc = {
 const Trips: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [rides, setRides] = React.useState<Array<{ id: string; data: RideDoc }>>([]);
+  const [rides, setRides] = React.useState<
+    Array<{ id: string; data: RideDoc }>
+  >([]);
   const [labels, setLabels] = React.useState<Record<string, string>>({});
-  const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN as string | undefined;
+  const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN as
+    | string
+    | undefined;
 
   React.useEffect(() => {
     if (!user) return;
@@ -33,16 +45,26 @@ const Trips: React.FC = () => {
     const unsub = onSnapshot(
       q,
       (snap) => {
-        const list: Array<{ id: string; data: RideDoc }> = snap.docs.map((d) => ({ id: d.id, data: d.data() as RideDoc }));
+        const list: Array<{ id: string; data: RideDoc }> = snap.docs.map(
+          (d) => ({ id: d.id, data: d.data() as RideDoc })
+        );
         setRides(list);
       },
       async (err) => {
         // Si falta el índice compuesto, usar fallback sin orderBy y ordenar en cliente
         try {
-          console.debug("Fallo consulta con índice en Trips; usando fallback", err);
-          const q2 = query(collection(firestore, "rides"), where("riderId", "==", user.uid));
+          console.debug(
+            "Fallo consulta con índice en Trips; usando fallback",
+            err
+          );
+          const q2 = query(
+            collection(firestore, "rides"),
+            where("riderId", "==", user.uid)
+          );
           const snap2 = await getDocs(q2);
-          const list2: Array<{ id: string; data: RideDoc }> = snap2.docs.map((d) => ({ id: d.id, data: d.data() as RideDoc }));
+          const list2: Array<{ id: string; data: RideDoc }> = snap2.docs.map(
+            (d) => ({ id: d.id, data: d.data() as RideDoc })
+          );
           list2.sort((a, b) => {
             const ta = a.data.completedAt ? a.data.completedAt.toMillis() : 0;
             const tb = b.data.completedAt ? b.data.completedAt.toMillis() : 0;
@@ -50,7 +72,10 @@ const Trips: React.FC = () => {
           });
           setRides(list2);
         } catch (err2) {
-          console.debug("No se pudo cargar historial desde Firestore (fallback)", err2);
+          console.debug(
+            "No se pudo cargar historial desde Firestore (fallback)",
+            err2
+          );
           setRides([]);
         }
       }
@@ -60,7 +85,10 @@ const Trips: React.FC = () => {
 
   // Utilidad para recortar dirección en formato corto
   const formatAddress = React.useCallback((addr: string): string => {
-    const parts = addr.split(",").map((p) => p.trim()).filter(Boolean);
+    const parts = addr
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean);
     if (parts.length >= 3) return `${parts[0]}, ${parts[1]}`; // vía y distrito/ciudad
     if (parts.length === 2) return `${parts[0]}, ${parts[1]}`;
     return parts[0] ?? addr;
@@ -74,7 +102,9 @@ const Trips: React.FC = () => {
         const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}&language=es&limit=1&types=place,locality,address`;
         const res = await fetch(url);
         if (!res.ok) return null;
-        const data = (await res.json()) as { features?: Array<{ place_name?: string }> };
+        const data = (await res.json()) as {
+          features?: Array<{ place_name?: string }>;
+        };
         const place = data?.features?.[0]?.place_name;
         if (typeof place === "string") return formatAddress(place);
         return null;
@@ -96,7 +126,11 @@ const Trips: React.FC = () => {
         const dest = r.data.destination;
         if (dest?.address) {
           next[id] = formatAddress(dest.address);
-        } else if (typeof dest?.lat === "number" && typeof dest?.lng === "number" && !next[id]) {
+        } else if (
+          typeof dest?.lat === "number" &&
+          typeof dest?.lng === "number" &&
+          !next[id]
+        ) {
           tasks.push(
             reverseGeocode(dest.lat, dest.lng).then((label) => {
               if (mounted && label) next[id] = label;
@@ -140,9 +174,17 @@ const Trips: React.FC = () => {
         ) : (
           <div className="space-y-3">
             {rides.map((r) => {
-              const destLabel = labels[r.id] ?? (r.data.destination?.address ? formatAddress(r.data.destination.address!) : `Lat ${r.data.destination?.lat?.toFixed(4)}, Lng ${r.data.destination?.lng?.toFixed(4)}`);
+              const destLabel =
+                labels[r.id] ??
+                (r.data.destination?.address
+                  ? formatAddress(r.data.destination.address!)
+                  : `Lat ${r.data.destination?.lat?.toFixed(
+                      4
+                    )}, Lng ${r.data.destination?.lng?.toFixed(4)}`);
               const price = r.data.price ?? 0;
-              const time = r.data.completedAt ? r.data.completedAt.toDate() : null;
+              const time = r.data.completedAt
+                ? r.data.completedAt.toDate()
+                : null;
               return (
                 <button
                   key={r.id}
@@ -153,9 +195,13 @@ const Trips: React.FC = () => {
                   <MapPin className="h-5 w-5 text-green-600" />
                   <div className="flex-1">
                     <p className="text-green-800">{destLabel}</p>
-                    <p className="text-xs text-green-700">{time ? time.toLocaleString() : ""}</p>
+                    <p className="text-xs text-green-700">
+                      {time ? time.toLocaleString() : ""}
+                    </p>
                   </div>
-                  <div className="text-green-800 font-semibold">S/ {price.toFixed(2)}</div>
+                  <div className="text-green-800 font-semibold">
+                    S/ {price.toFixed(2)}
+                  </div>
                 </button>
               );
             })}

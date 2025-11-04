@@ -16,7 +16,9 @@ function App() {
     <Router>
       <div className="min-h-screen pb-20">
         {loading ? (
-          <div className="flex items-center justify-center h-screen text-green-800">Cargando…</div>
+          <div className="flex items-center justify-center h-screen text-green-800">
+            Cargando…
+          </div>
         ) : (
           <>
             <Routes>

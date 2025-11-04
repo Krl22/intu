@@ -4,7 +4,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
 import { firestore } from "@/lib/firebase";
-import { doc, onSnapshot, updateDoc, serverTimestamp } from "firebase/firestore";
+import {
+  doc,
+  onSnapshot,
+  updateDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import { useAuth } from "@/context/useAuth";
 
 type RideDoc = {
@@ -73,8 +78,12 @@ const RateDriver: React.FC = () => {
     <div className="min-h-screen bg-amber-50">
       <div className="p-4 border-b border-amber-100 bg-amber-50">
         <div className="flex items-center space-x-3">
-          <h1 className="text-2xl font-bold text-green-800">Calificar conductor</h1>
-          <p className="text-green-700 text-sm">Tu opinión mejora el servicio</p>
+          <h1 className="text-2xl font-bold text-green-800">
+            Calificar conductor
+          </h1>
+          <p className="text-green-700 text-sm">
+            Tu opinión mejora el servicio
+          </p>
         </div>
       </div>
 
@@ -87,7 +96,9 @@ const RateDriver: React.FC = () => {
                   Destino: {ride.destination?.address ?? "(sin dirección)"}
                 </p>
                 {typeof ride.price === "number" && (
-                  <p className="text-sm text-green-800">Precio: S/ {ride.price.toFixed(2)}</p>
+                  <p className="text-sm text-green-800">
+                    Precio: S/ {ride.price.toFixed(2)}
+                  </p>
                 )}
               </div>
             ) : (
@@ -106,14 +117,20 @@ const RateDriver: React.FC = () => {
                   disabled={!canRate}
                 >
                   <Star
-                    className={`h-7 w-7 ${i <= (hover || rating) ? "text-yellow-500 fill-yellow-400" : "text-gray-400"}`}
+                    className={`h-7 w-7 ${
+                      i <= (hover || rating)
+                        ? "text-yellow-500 fill-yellow-400"
+                        : "text-gray-400"
+                    }`}
                   />
                 </button>
               ))}
             </div>
 
             <div>
-              <label className="block text-sm text-green-800 mb-1">Comentario (opcional)</label>
+              <label className="block text-sm text-green-800 mb-1">
+                Comentario (opcional)
+              </label>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}

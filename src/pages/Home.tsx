@@ -4,9 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Search, Navigation } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/useAuth";
-import { firestore } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
 import { searchPlaces, type GeocodeFeature } from "@/lib/geocoding";
 import logo from "@/assets/logo.png";
 
@@ -25,40 +22,6 @@ const Home: React.FC = () => {
   const [suggestions, setSuggestions] = useState<GeocodeFeature[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const debounceRef = useRef<number | null>(null);
-  const { user } = useAuth();
-  const [isProfileComplete, setIsProfileComplete] = useState<boolean>(false);
-
-  useEffect(() => {
-    const checkProfile = async () => {
-      if (!user) {
-        setIsProfileComplete(false);
-        return;
-      }
-      try {
-        const snap = await getDoc(doc(firestore, "users", user.uid));
-        const data = (snap.data() || {}) as {
-          firstName?: string;
-          lastName?: string;
-          birthdate?: string;
-          profilePhotoUrl?: string;
-        };
-        const ok = !!(data.firstName && data.lastName && data.birthdate && data.profilePhotoUrl);
-        setIsProfileComplete(ok);
-      } catch {
-        setIsProfileComplete(false);
-      }
-    };
-    checkProfile();
-  }, [user]);
-
-  const ensureProfileComplete = (): boolean => {
-    if (!isProfileComplete) {
-      alert("Completa tu perfil en Cuenta antes de buscar taxi.");
-      navigate("/account");
-      return false;
-    }
-    return true;
-  };
 
   useEffect(() => {
     const state = location.state as {
@@ -164,7 +127,6 @@ const Home: React.FC = () => {
                           key={s.id}
                           type="button"
                           onClick={() => {
-                            if (!ensureProfileComplete()) return;
                             const [lng, lat] = s.center;
                             setSelectedLocation({
                               lat,
@@ -198,11 +160,9 @@ const Home: React.FC = () => {
               {/* Action Buttons */}
               <div>
                 <Button
-                  onClick={() => {
-                    if (!ensureProfileComplete()) return;
-                    navigate("/select-destination", { state: { userLoc } });
-                  }}
-                  disabled={!isProfileComplete}
+                  onClick={() =>
+                    navigate("/select-destination", { state: { userLoc } })
+                  }
                   className="w-full flex items-center justify-center space-x-2 py-3 bg-green-700 hover:bg-green-800 text-white"
                 >
                   <Navigation className="h-4 w-4" />

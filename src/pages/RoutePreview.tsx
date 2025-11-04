@@ -6,8 +6,19 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import Pin from "@/components/Pin";
 import { db, firestore } from "@/lib/firebase";
-import { ref, push, set, onValue, serverTimestamp, update } from "firebase/database";
-import { doc as fsDoc, setDoc as fsSetDoc, serverTimestamp as fsServerTimestamp, getDoc } from "firebase/firestore";
+import {
+  ref,
+  push,
+  set,
+  onValue,
+  serverTimestamp,
+  update,
+} from "firebase/database";
+import {
+  doc as fsDoc,
+  setDoc as fsSetDoc,
+  serverTimestamp as fsServerTimestamp,
+} from "firebase/firestore";
 import { useAuth } from "@/context/useAuth";
 import { getDrivingRoute, lineBounds } from "@/lib/directions";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -39,8 +50,13 @@ const RoutePreview: React.FC = () => {
     distanceMeters: number;
     durationSeconds: number;
   } | null>(null);
-  const [driverLoc, setDriverLoc] = useState<{ lat: number; lng: number } | null>(null);
-  const [rideStatus, setRideStatus] = useState<"searching"|"accepted"|"in_progress"|"completed"|"cancelled"|null>(null);
+  const [driverLoc, setDriverLoc] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [rideStatus, setRideStatus] = useState<
+    "searching" | "accepted" | "in_progress" | "completed" | "cancelled" | null
+  >(null);
   const [viewState, setViewState] = useState<ViewState | null>(
     state?.destination
       ? makeViewState(state.destination.lat, state.destination.lng, 13)
@@ -218,7 +234,11 @@ const RoutePreview: React.FC = () => {
           )}
 
           {driverLoc && (
-            <Marker longitude={driverLoc.lng} latitude={driverLoc.lat} anchor="center">
+            <Marker
+              longitude={driverLoc.lng}
+              latitude={driverLoc.lat}
+              anchor="center"
+            >
               <div className="text-xl drop-shadow">🚗</div>
             </Marker>
           )}
@@ -250,7 +270,11 @@ const RoutePreview: React.FC = () => {
           distanceMeters={summary.distanceMeters}
           durationSeconds={summary.durationSeconds}
           origin={origin}
-          destination={{ lat: state.destination.lat, lng: state.destination.lng, address: state.destination.address }}
+          destination={{
+            lat: state.destination.lat,
+            lng: state.destination.lng,
+            address: state.destination.address,
+          }}
           onDriverLocUpdate={setDriverLoc}
           onStatusUpdate={setRideStatus}
           onCompleted={(rid) => {
@@ -272,32 +296,42 @@ interface RideOptionsProps {
   origin: { lat: number; lng: number };
   destination: { lat: number; lng: number; address?: string };
   onDriverLocUpdate?: (loc: { lat: number; lng: number } | null) => void;
-  onStatusUpdate?: (status: "searching"|"accepted"|"in_progress"|"completed"|"cancelled") => void;
+  onStatusUpdate?: (
+    status: "searching" | "accepted" | "in_progress" | "completed" | "cancelled"
+  ) => void;
   onCompleted?: (id: string) => void;
 }
 
-const RideOptionsPanel: React.FC<RideOptionsProps> = ({ distanceMeters, durationSeconds, origin, destination, onDriverLocUpdate, onStatusUpdate, onCompleted }) => {
+const RideOptionsPanel: React.FC<RideOptionsProps> = ({
+  distanceMeters,
+  durationSeconds,
+  origin,
+  destination,
+  onDriverLocUpdate,
+  onStatusUpdate,
+  onCompleted,
+}) => {
   const distanceKm = distanceMeters / 1000;
   const durationMin = durationSeconds / 60;
   const { user } = useAuth();
 
   const rides = [
     {
-      id: 'intutaxi',
-      label: 'IntuTaxi',
-      desc: 'Moto taxi estándar',
+      id: "intutaxi",
+      label: "IntuTaxi",
+      desc: "Moto taxi estándar",
       rates: { base: 3.0, perKm: 1.5, perMin: 0.2 },
     },
     {
-      id: 'intupremium',
-      label: 'IntuPremium',
-      desc: 'Moto taxi premium',
+      id: "intupremium",
+      label: "IntuPremium",
+      desc: "Moto taxi premium",
       rates: { base: 5.0, perKm: 2.2, perMin: 0.3 },
     },
     {
-      id: 'intueco',
-      label: 'IntuEco',
-      desc: 'Moto taxi económico',
+      id: "intueco",
+      label: "IntuEco",
+      desc: "Moto taxi económico",
       rates: { base: 2.5, perKm: 1.2, perMin: 0.18 },
     },
   ];
@@ -307,10 +341,13 @@ const RideOptionsPanel: React.FC<RideOptionsProps> = ({ distanceMeters, duration
     return Math.max(price, base);
   };
 
-  const [selected, setSelected] = React.useState<string>('intutaxi');
+  const [selected, setSelected] = React.useState<string>("intutaxi");
   const [requestId, setRequestId] = React.useState<string | null>(null);
   const [searching, setSearching] = React.useState<boolean>(false);
-  const [driverInfo, setDriverInfo] = React.useState<{ name?: string; phone?: string } | null>(null);
+  const [driverInfo, setDriverInfo] = React.useState<{
+    name?: string;
+    phone?: string;
+  } | null>(null);
   const [pickupCode, setPickupCode] = React.useState<string | null>(null);
   const subRef = React.useRef<(() => void) | null>(null);
   const selectedRide = rides.find((r) => r.id === selected)!;
@@ -322,7 +359,7 @@ const RideOptionsPanel: React.FC<RideOptionsProps> = ({ distanceMeters, duration
 
   const createRideRequest = async () => {
     if (!user) return;
-    const reqRef = push(ref(db, 'rides/requests'));
+    const reqRef = push(ref(db, "rides/requests"));
     // RTDB no acepta valores undefined; asegurar null o omitir
     const payload = {
       riderId: user.uid,
@@ -335,7 +372,7 @@ const RideOptionsPanel: React.FC<RideOptionsProps> = ({ distanceMeters, duration
       },
       service: selected,
       priceEstimate: Number(selectedPrice.toFixed(2)),
-      status: 'searching',
+      status: "searching",
       createdAt: serverTimestamp(),
       driver: null,
     };
@@ -348,37 +385,47 @@ const RideOptionsPanel: React.FC<RideOptionsProps> = ({ distanceMeters, duration
       if (val.status) {
         onStatusUpdate?.(val.status);
       }
-      if (val.status === 'accepted' && val.driver) {
+      if (val.status === "accepted" && val.driver) {
         setDriverInfo({ name: val.driver.name, phone: val.driver.phone });
         setSearching(false);
         if (val.pickupCode) setPickupCode(String(val.pickupCode));
       }
-      if (val.driverLoc && typeof val.driverLoc.lat === 'number' && typeof val.driverLoc.lng === 'number') {
+      if (
+        val.driverLoc &&
+        typeof val.driverLoc.lat === "number" &&
+        typeof val.driverLoc.lng === "number"
+      ) {
         onDriverLocUpdate?.({ lat: val.driverLoc.lat, lng: val.driverLoc.lng });
       }
-      if (val.status === 'completed') {
+      if (val.status === "completed") {
         const rid = reqRef.key;
         if (rid) {
           // Fallback: asegurar documento en Firestore para Trips y Rating
           try {
             await fsSetDoc(
-              fsDoc(firestore, 'rides', rid),
+              fsDoc(firestore, "rides", rid),
               {
                 riderId: user?.uid ?? null,
                 origin: val.origin ?? null,
                 destination: val.destination ?? null,
                 service: val.service ?? null,
-                price: typeof val.priceEstimate === 'number' ? val.priceEstimate : null,
+                price:
+                  typeof val.priceEstimate === "number"
+                    ? val.priceEstimate
+                    : null,
                 driverId: val.driver?.id ?? null,
                 driverName: val.driver?.name ?? null,
                 driverPhone: val.driver?.phone ?? null,
-                status: 'completed',
+                status: "completed",
                 completedAt: fsServerTimestamp(),
               },
               { merge: true }
             );
           } catch (err) {
-            console.debug('No se pudo crear/actualizar ride en Firestore (cliente)', err);
+            console.debug(
+              "No se pudo crear/actualizar ride en Firestore (cliente)",
+              err
+            );
           }
           onDriverLocUpdate?.(null);
           onCompleted?.(rid);
@@ -386,7 +433,7 @@ const RideOptionsPanel: React.FC<RideOptionsProps> = ({ distanceMeters, duration
         subRef.current?.();
         subRef.current = null;
       }
-      if (val.status === 'cancelled') {
+      if (val.status === "cancelled") {
         onDriverLocUpdate?.(null);
         subRef.current?.();
         subRef.current = null;
@@ -397,7 +444,9 @@ const RideOptionsPanel: React.FC<RideOptionsProps> = ({ distanceMeters, duration
 
   const cancelRequest = async () => {
     if (!requestId) return;
-    await update(ref(db, `rides/requests/${requestId}`), { status: 'cancelled' });
+    await update(ref(db, `rides/requests/${requestId}`), {
+      status: "cancelled",
+    });
     setSearching(false);
     setRequestId(null);
     onDriverLocUpdate?.(null);
@@ -410,24 +459,40 @@ const RideOptionsPanel: React.FC<RideOptionsProps> = ({ distanceMeters, duration
       {requestId === null && (
         <>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-green-700">Opciones de moto taxi (Perú)</p>
-            <p className="text-sm text-gray-600">ETA ~ {Math.max(1, Math.round(durationMin))} min</p>
+            <p className="text-sm text-green-700">
+              Opciones de moto taxi (Perú)
+            </p>
+            <p className="text-sm text-gray-600">
+              ETA ~ {Math.max(1, Math.round(durationMin))} min
+            </p>
           </div>
 
           <div className="grid grid-cols-3 gap-3 mb-4">
             {rides.map((ride) => {
-              const price = estimate(ride.rates.base, ride.rates.perKm, ride.rates.perMin);
+              const price = estimate(
+                ride.rates.base,
+                ride.rates.perKm,
+                ride.rates.perMin
+              );
               const isActive = selected === ride.id;
               return (
                 <button
                   key={ride.id}
                   type="button"
                   onClick={() => setSelected(ride.id)}
-                  className={`rounded-lg border px-3 py-2 text-left ${isActive ? 'border-green-600 bg-amber-50' : 'border-green-100 bg-white'}`}
+                  className={`rounded-lg border px-3 py-2 text-left ${
+                    isActive
+                      ? "border-green-600 bg-amber-50"
+                      : "border-green-100 bg-white"
+                  }`}
                 >
-                  <p className="font-semibold text-green-800 text-sm">{ride.label}</p>
+                  <p className="font-semibold text-green-800 text-sm">
+                    {ride.label}
+                  </p>
                   <p className="text-xs text-green-700">{ride.desc}</p>
-                  <p className="mt-1 font-medium text-green-800">S/ {price.toFixed(2)}</p>
+                  <p className="mt-1 font-medium text-green-800">
+                    S/ {price.toFixed(2)}
+                  </p>
                 </button>
               );
             })}
@@ -439,26 +504,7 @@ const RideOptionsPanel: React.FC<RideOptionsProps> = ({ distanceMeters, duration
         <button
           type="button"
           className="w-full py-3 rounded-lg bg-green-700 hover:bg-green-800 text-white font-semibold"
-          onClick={async () => {
-            if (!user) return;
-            try {
-              const snap = await getDoc(fsDoc(firestore, "users", user.uid));
-              const data = (snap.data() || {}) as {
-                firstName?: string;
-                lastName?: string;
-                birthdate?: string;
-                profilePhotoUrl?: string;
-              };
-              const ok = !!(data.firstName && data.lastName && data.birthdate && data.profilePhotoUrl);
-              if (!ok) {
-                alert("Completa tu perfil en Cuenta antes de solicitar un taxi.");
-                return;
-              }
-            } catch (err) {
-              console.debug("No se pudo validar el perfil del usuario", err);
-            }
-            await createRideRequest();
-          }}
+          onClick={createRideRequest}
           disabled={!user}
         >
           Confirmar {selectedRide.label} (S/ {selectedPrice.toFixed(2)})
@@ -467,7 +513,9 @@ const RideOptionsPanel: React.FC<RideOptionsProps> = ({ distanceMeters, duration
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-green-600 animate-pulse" />
-            <span className="text-green-800 font-medium">Buscando conductor…</span>
+            <span className="text-green-800 font-medium">
+              Buscando conductor…
+            </span>
           </div>
           <button
             type="button"
@@ -479,7 +527,9 @@ const RideOptionsPanel: React.FC<RideOptionsProps> = ({ distanceMeters, duration
         </div>
       ) : null}
 
-      <p className="mt-2 text-[11px] text-gray-500">Tarifas estimadas. Pueden variar por tráfico, clima y demanda.</p>
+      <p className="mt-2 text-[11px] text-gray-500">
+        Tarifas estimadas. Pueden variar por tráfico, clima y demanda.
+      </p>
 
       {driverInfo && (
         <div className="mt-3 p-3 rounded-lg bg-green-50 border border-green-200 text-green-800">
@@ -489,7 +539,8 @@ const RideOptionsPanel: React.FC<RideOptionsProps> = ({ distanceMeters, duration
 
       {pickupCode && (
         <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800">
-          Código de seguridad: <span className="font-mono text-lg">{pickupCode}</span>
+          Código de seguridad:{" "}
+          <span className="font-mono text-lg">{pickupCode}</span>
         </div>
       )}
     </div>
